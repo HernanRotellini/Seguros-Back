@@ -39,11 +39,11 @@ const upload = multer({ storage: storage });
 
 
 server.post('/UrgentMailer', upload.array('images[]', 10), async (req, res) => {
-  const { subjectText, description, name, contactmail, bool } = req.body;
+  const { subjectText, message, name, contactmail, bool } = req.body;
   const imageFilesPaths = req.files.map(file => file.path); // Rutas de los archivos cargados
 
   try {
-      const result = await UrgentMail(subjectText, description, name, contactmail, bool, imageFilesPaths);
+      const result = await UrgentMail(subjectText, message, name, contactmail, bool, imageFilesPaths);
       res.status(200).json({ message: result });
   } catch (error) {
       res.status(500).json({ message: error });
