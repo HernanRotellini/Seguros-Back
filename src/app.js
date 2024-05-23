@@ -4,6 +4,10 @@ const router = require("./Routes/routes.js");
 const server = express();
 const bodyParser = require("body-parser");
 const UrgentMail = require("./Controllers/UrgentMailer");
+const multer = require('multer');
+//const upload = multer({ dest: 'uploads/' });
+const fs = require('fs');
+const path = require('path');
 
 
 server.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
@@ -21,15 +25,35 @@ server.use((req, res, next) => {
 
 server.use("/", router);
 
-server.post("/UrgentMailer", (req, res) => {
-  const { subjectText, description, name, contactmail } = req.body;
-  
-  UrgentMail(subjectText, description, name, contactmail)
-    .then((response) => {
-      res.status(200).json({ message: response });
-    })
-    .catch((error) => {
-      res.status(500).json({ error: error });
-    });
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+      cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname);
+      cb(null, file.fieldname + '-' + Date.now() + ext);
+  }
+});
+
+const upload = multer({ storage: storage });
+
+
+server.post('/UrgentMailer', upload.array('images[]', 10), async (req, res) => {
+  const { subjectText, description, name, contactmail, bool } = req.body;
+  const imageFilesPaths = req.files.map(file => file.path); // Rutas de los archivos cargados
+
+  try {
+      const result = await UrgentMail(subjectText, description, name, contactmail, bool, imageFilesPaths);
+      res.status(200).json({ message: result });
+  } catch (error) {
+      res.status(500).json({ message: error });
+  } finally {
+      // Limpia los archivos cargados del servidor
+      imageFilesPaths.forEach(imageFilePath => {
+          fs.unlink(imageFilePath, (err) => {
+              if (err) console.error("Error al eliminar el archivo cargado:", err);
+          });
+      });
+  }
 });
 module.exports = server;
