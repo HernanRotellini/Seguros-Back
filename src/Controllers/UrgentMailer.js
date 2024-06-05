@@ -1,6 +1,6 @@
 
 const path = require('path');
-
+require("dotenv").config();
 const nodemailer = require('nodemailer');
 
 
@@ -10,31 +10,32 @@ const config = {
     port: 587,
     secure: false,
     auth: {
-        user: 'oesteseguros123@gmail.com',
-        pass: 'bgjjoqcrrhtrqhgg'
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
     },
     tls: {
-        rejectUnauthorized: false // Configura esto para aceptar certificados autofirmados
+        rejectUnauthorized: false 
     }
 };
 
 const transporter = nodemailer.createTransport(config);
 
 
-const UrgentMail = async (subjectText, message, name, contactmail, bool, imageFilePaths) => {
+const UrgentMail = async (subject, message, name, email, bool, imageFilePaths) => {
   console.log("Enviando correo");
   let address;
-  if (bool) {
-      address = "oesteseguros123@gmail.com";
-  } else {
-      address = "hernanrotellini@hotmail.com";
-  }
+      address = process.env.EMAIL_ADDRESS;
+
+      if(bool){
+        subject = "ATE " + subject
+      }
   let mailOptions = {
-      from: "oesteseguros123@gmail.com",
+      from: process.env.EMAIL_USER,
       to: address,
-      subject: subjectText,
-      html: `<h5>Mensaje enviado desde la página web</h5>
-              <h5>${message.replace(/\n/g, '<br>')}<br>Datos de contacto:<br>Nombre: ${name}<br>Email: ${contactmail}</h5>`,
+      subject: subject,
+      html: `<h3>${message.replace(/\n/g, '<br>')}</h3>
+              <h3>Datos de contacto:<br>Nombre: ${name}</h3>
+              <h3>Email: ${email}</h3>`,
       attachments: imageFilePaths.map(imageFilePath => ({
           filename: path.basename(imageFilePath),
           path: imageFilePath
